@@ -23,11 +23,11 @@
     <field name="co_id" type="I">
       <constraint>REFERENCES cm_co(id)</constraint>
     </field>
-    <field name="co_enrollment_flow_id" type="I">
-      <constraint>REFERENCES cm_co_enrollment_flows(id)</constraint>
-    </field>
     <field name="co_service_id" type="I">
       <constraint>REFERENCES cm_co_services(id)</constraint>
+    </field>
+    <field name="co_message_template_id" type="I">
+      <constraint>REFERENCES cm_co_message_templates(id)</constraint>
     </field>
     <field name="created" type="T" />
     <field name="modified" type="T" />

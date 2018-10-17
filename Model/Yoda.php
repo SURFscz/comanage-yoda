@@ -8,6 +8,9 @@
 class Yoda extends AppModel {
   // Define class name for cake
   public $name = "Yoda";
+
+  // define the plugin types this plugin caters
+  public $cmPluginType = "enroller";
   
   public $useTable="yoda";
   
@@ -23,7 +26,7 @@ class Yoda extends AppModel {
   // Association rules from this model to other models
   public $belongsTo = array(
     "Co",
-    "CoEnrollmentFlow",
+    "CoMessageTemplate",
     "CoService"
   );
 
@@ -39,6 +42,16 @@ class Yoda extends AppModel {
       'rule' => 'numeric',
       'required' => true,
       'allowEmpty' => false
+    ),
+    'co_message_template_id' => array(
+      'rule' => 'numeric',
+      'required' => false,
+      'allowEmpty' => false
+    ),
+    'co_service_id' => array(
+      'rule' => 'numeric',
+      'required' => false,
+      'allowEmpty' => false
     )
   );
   
@@ -47,7 +60,34 @@ class Yoda extends AppModel {
   public $cm_enum_types = array(
     'status' => 'SuspendableStatusEnum'
   );
+
+  /**
+   * Expose menu items.
+   * 
+   * @since  COmanage Registry v2.0.0
+   * @return Array with menu location type as key and array of labels, controllers, actions as values.
+   */
   
+  public function cmPluginMenus() {
+    $request = Router::getParams(false);
+    if(isset($request['named']) && isset($request['named']['co'])) {
+      $coid = $request['named']['co'];
+    
+      $args=array();
+      $args['conditions']['Yoda.co_id'] = $coid;
+      $args['contain']=false;
+      $yoda=$this->find('first',$args);
+    
+      if(!empty($yoda)) {
+        return array(
+          "coconfig" => array(_txt('pl.ct.yoda') =>
+                            array('controller' => 'yoda',
+                                    'action'     => 'index'))
+        );
+      }
+    }
+    return array();
+  }
   /**
    * Callback after model save.
    *

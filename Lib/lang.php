@@ -13,14 +13,16 @@ global $cm_lang, $cm_texts;
 
 $cm_yoda_texts['en_US'] = array(
   // Titles, per-controller
-  'ct.yoda.config'  => 'Configuration',
-  'ct.yoda' => 'Yoda',
-  'fd.yoda.enroll' => 'Start enrollment',
-  'fd.yoda.reset_token' => 'Reset service token',
-  'fd.yoda.enrollment'  => 'Invite flow',
-  'fd.yoda.enrollment.desc'  => 'Select the default invite flow to be used',
-  'fd.yoda.service'  => 'Service',
-  'fd.yoda.service.desc'  => 'Select the Yoda service entry for service token generation and adjustment',
-  'op.yoda.reset' => 'Reset',
+  'pl.ct.yoda' => 'Yoda',
+  'pl.fd.yoda.enroll' => 'Start enrollment',
+  'pl.fd.yoda.reset_token' => 'Reset service token',
+  'pl.fd.yoda.template'  => 'Email message template',
+  'pl.fd.yoda.template.desc'  => 'Select the template to be used to inform users of a new service token',
+  'pl.fd.yoda.service'  => 'Service',
+  'pl.fd.yoda.service.desc'  => 'Select the Yoda service entry for service token generation and adjustment',
+  'pl.yoda.default_token_subject' => 'New password for Yoda',
+  'pl.yoda.default_token_template' => 'Dear (@CO_PERSON),\r\n\r\nPlease find enclosed the new token password required for access to the Yoda server:\r\n(@TOKEN)\r\n\r\nRegards,\r\n\r\nSystem Administration\r\n',
+  'pl.yoda.password_comment_enroll' => "A new service token password was sent to the email address for this CoPerson after completing enrollment",
+  'pl.yoda.password_comment_request' => "A new service token password was sent to the email address for this CoPerson upon request",
 );
 
