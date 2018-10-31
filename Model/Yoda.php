@@ -81,8 +81,9 @@ class Yoda extends AppModel {
       if(!empty($yoda)) {
         return array(
           "coconfig" => array(_txt('pl.ct.yoda') =>
-                            array('controller' => 'yoda',
-                                    'action'     => 'index'))
+                            array('icon' => 'grid_on',
+                                  'controller' => 'yoda',
+                                  'action'     => 'index'))
         );
       }
     }
