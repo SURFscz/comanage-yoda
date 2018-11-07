@@ -45,7 +45,7 @@ class YodaController extends AppController {
     // Determine what operations this user can perform
     
     // Configure the page settings
-    $p['index'] = $roles['coadmin'];
+    $p['index'] = $roles['coadmin'] || $roles['cmadmin'];
     $p['reset'] = !empty($roles['copersonid']);
     
     $this->set('permissions', $p);
