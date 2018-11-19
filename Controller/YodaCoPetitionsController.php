@@ -35,8 +35,7 @@ class YodaCoPetitionsController extends CoPetitionsController {
   /**
    * Plugin functionality following finalize step
    *
-   * At this point, we have approved the enrollment already by pre-matching the url encoded attributes.
-   * Now create identifiers of type 'uid' or a specifically specified type. Only do this for non-identifiers.
+   * Create identifiers of type 'uid' or a specifically specified type. Only do this for non-identifiers.
    *
    * @param Integer $id CO Petition ID
    * @param Array $onFinish URL, in Cake format
@@ -58,7 +57,13 @@ class YodaCoPetitionsController extends CoPetitionsController {
     );
 
     $copetition = $this->CoPetition->find('first', $args);
-    $petitionSuccess=false;
+
+    // re-validate the passed parameters just to be sure the user was not meddling with
+    // the actual XHR calls and has skipped the FixedAttributeEnroller
+    if(!$this->FixedAttribute->checkAttributes($copetition)) {
+      // we can safely give an ugly error now
+      throw new RuntimeException("Not Authorized");
+    }
 
     try {
       $values = $this->FixedAttribute->parseUrl($copetition['CoPetition']['return_url']);
@@ -66,11 +71,7 @@ class YodaCoPetitionsController extends CoPetitionsController {
       if(sizeof($values) && is_array($values)) {
         foreach($values as $key=>$value) {
 
-          // if there are keys with values, then they were checked and approved earlier on
-          $petitionSuccess = $petitionSuccess || sizeof($value);
-
           $valuefound = $this->FixedAttribute->getAttribute($copetition['EnrolleeOrgIdentity'], $key);
-
           if($valuefound !== null) {
             // valuefound is a collection of all attributes values that match the search
             // Take the first value
@@ -89,19 +90,19 @@ class YodaCoPetitionsController extends CoPetitionsController {
               // We could argue that the allowed list of types is governed by the API of this plugin and not directly by the
               // list of supported types of COmanage...
               if(!in_array($type, array(IdentifierEnum::Badge,
-                                                 IdentifierEnum::Enterprise,
-                                                 IdentifierEnum::ePPN,
-                                                 IdentifierEnum::ePTID,
-                                                 IdentifierEnum::ePUID,
-                                                 IdentifierEnum::Mail,
-                                                 IdentifierEnum::National,
-                                                 IdentifierEnum::Network,
-                                                 IdentifierEnum::OpenID,
-                                                 IdentifierEnum::ORCID,
-                                                 IdentifierEnum::ProvisioningTarget,
-                                                 IdentifierEnum::Reference,
-                                                 IdentifierEnum::SORID,
-                                                 IdentifierEnum::UID)))
+                                        IdentifierEnum::Enterprise,
+                                        IdentifierEnum::ePPN,
+                                        IdentifierEnum::ePTID,
+                                        IdentifierEnum::ePUID,
+                                        IdentifierEnum::Mail,
+                                        IdentifierEnum::National,
+                                        IdentifierEnum::Network,
+                                        IdentifierEnum::OpenID,
+                                        IdentifierEnum::ORCID,
+                                        IdentifierEnum::ProvisioningTarget,
+                                        IdentifierEnum::Reference,
+                                        IdentifierEnum::SORID,
+                                        IdentifierEnum::UID)))
               {
                 $type = IdentifierEnum::UID;
               }
@@ -124,34 +125,19 @@ class YodaCoPetitionsController extends CoPetitionsController {
                 $identifierData['Identifier']['login'] = false;
                 $identifierData['Identifier']['status'] = StatusEnum::Active;
                 $identifierData['Identifier']['co_person_id'] = $copetition['CoPetition']['enrollee_co_person_id'];
-              
+
                 $this->Identifier->create($identifierData);
                 $this->Identifier->save($identifierData, array('provision' => false));
               }
               // else the identifier already exists. Accept this and go on. Something else might fail
               // later on (when identifiers are checked at the SP), or it might not. 
-            }
-            // else this is an identifier attribute, do not copy it
-            
-            
+            } // else this is an identifier attribute, do not copy it
           } // else this is an empty value. We should have bailed on this early on, do not bail now
         }
       } // else we did not find any return url parameters, this plugin is not used
     }
     catch(Exception $e) {
       // ignore any errors, this is not an essential step
-    }
-
-    if(!$petitionSuccess) {
-      // if for some reason we did not conclude that this petition was successfully approved
-      // using the FixedAttributeEnroller, we do not send out an email
-      $this->Session->write('yoda_send_email', false);
-
-      // unfortunately, we cannot reset the petition status to denied at this point,
-      // but that would be copying (and potentially breaking) the FixedAttributeEnroller
-      // behaviour
-    } else {
-      $this->Session->write('yoda_send_email', true);
     }
 
     $this->redirect($onFinish);
@@ -167,15 +153,30 @@ class YodaCoPetitionsController extends CoPetitionsController {
    * @param Array $onFinish URL, in Cake format
    */
   protected function execute_plugin_provision($id, $onFinish) {
-    if($this->Session->read("yoda_send_email") === true) {
-      // Get the Petition artifact
-      $args = array();
-      $args['conditions']['CoPetition.id'] = $id;
-      $args['contain'] = array('EnrolleeCoPerson');
-      $copetition=$this->CoPetition->find('first',$args);
+    // Get the Petition artifact
+    $args = array();
+    $args['conditions']['CoPetition.id'] = $id;
+    $args['contain'] = array('EnrolleeCoPerson',
+      'EnrolleeOrgIdentity' => array(
+        'Address',
+        'EmailAddress',
+        'Identifier',
+        'Name',
+        'PrimaryName' => array('conditions' => array('PrimaryName.primary_name' => true)),
+        'TelephoneNumber',
+        'Url'
+       )
+      );
+    $copetition=$this->CoPetition->find('first',$args);
 
-      $this->ServiceTokenMailer->sendNewToken($copetition['EnrolleeCoPerson']['id'], true);
+    // re-validate the passed parameters just to be sure the user was not meddling with
+    // the actual XHR calls and has skipped the FixedAttributeEnroller
+    if(!$this->FixedAttribute->checkAttributes($copetition)) {
+      // we can safely give an ugly error now
+      throw new RuntimeException("Not Authorized");
     }
+
+    $this->ServiceTokenMailer->sendNewToken($copetition['EnrolleeCoPerson']['id'], true);
 
     $this->redirect($onFinish);
   }
