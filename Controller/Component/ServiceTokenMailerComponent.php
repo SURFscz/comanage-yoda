@@ -125,35 +125,27 @@ class ServiceTokenMailerComponent extends Component {
       $this->getYodaConfig($coperson['CoPerson']['co_id']);
       $template = isset($this->yoda['CoMessageTemplate']) ? $this->yoda['CoMessageTemplate'] : null;
 
-      if(empty($template)) {
-        $template = array(
-          "message_subject" => _txt("pl.yoda.default_token_subject"),
-          "message_body" => _txt("pl.yoda.default_token_template"),
-          "cc" => null,
-          "bcc" => null
+      if(!empty($template)) {
+        $subs = array(
+          'CO_PERSON' => generateCn($coperson['PrimaryName']),
+          'TOKEN' => $this->createTokenUrl($coperson['CoPerson']),
+          'CO_NAME' => $coperson['Co']['name']
         );
-      }
 
-      $subs = array(
-        'CO_PERSON' => generateCn($coperson['PrimaryName']),
-        'TOKEN' => $this->createTokenUrl($coperson['CoPerson']),
-        'CO_NAME' => $coperson['Co']['name']
-      );
+        $subject = $template['message_subject'];
+        $body = $template['message_body'];
+        $cc = $template['cc'];
+        $bcc = $template['bcc'];
 
-      $subject = $template['message_subject'];
-      $body = $template['message_body'];
-      $cc = $template['cc'];
-      $bcc = $template['bcc'];
+        $subject = processTemplate($subject, $subs, $coperson['Identifier']);
+        $body = processTemplate($body, $subs, $coperson['Identifier']);
+        $comment = _txt('pl.yoda.password_comment' . ($is_enrolling ? "_enroll" : "_request"));
 
-      $subject = processTemplate($subject, $subs, $coperson['Identifier']);
-      $body = processTemplate($body, $subs, $coperson['Identifier']);
-      $comment = _txt('pl.yoda.password_comment' . ($is_enrolling ? "_enroll" : "_request"));
+        $src = array();
+        $src['controller'] = 'co_service_token/co_service_tokens';
+        $src['action'] = 'index/copersonid:'.$coperson['CoPerson']['id'];
 
-      $src = array();
-      $src['controller'] = 'co_service_token/co_service_tokens';
-      $src['action'] = 'index/copersonid:'.$coperson['CoPerson']['id'];
-
-      $coPersonModel->CoNotificationRecipient->register($coperson['CoPerson']['id'],
+        $coPersonModel->CoNotificationRecipient->register($coperson['CoPerson']['id'],
                 null,
                 $this->controller->Session->read('Auth.User.co_person_id'),
                 'coperson',
@@ -167,6 +159,7 @@ class ServiceTokenMailerComponent extends Component {
                 $body,
                 $cc,
                 $bcc);
+      } // if not empty template
     } // if not empty email
   }
 }
