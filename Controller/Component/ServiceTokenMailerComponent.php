@@ -30,7 +30,7 @@ class ServiceTokenMailerComponent extends Component {
    *
    * @param Object $controller Controller
    */
-  public function initialize($controller) {
+  public function initialize(Controller $controller) {
     $this->controller=$controller;
   }
 
